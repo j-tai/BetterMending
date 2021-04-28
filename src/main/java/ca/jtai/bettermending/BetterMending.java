@@ -31,7 +31,7 @@ public final class BetterMending extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerExpChange(PlayerExpChangeEvent e) {
-        int amount = e.getAmount();
+        int amount = e.getAmount() * 2;
         if (amount <= 0)
             return;
         PlayerInventory inventory = e.getPlayer().getInventory();
@@ -63,6 +63,6 @@ public final class BetterMending extends JavaPlugin implements Listener {
             if (amount <= 0)
                 break;
         }
-        e.setAmount(amount);
+        e.setAmount((amount + 1) / 2);
     }
 }
