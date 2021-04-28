@@ -1,6 +1,7 @@
 package ca.jtai.bettermending;
 
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -12,6 +13,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
@@ -19,18 +21,52 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class BetterMending extends JavaPlugin implements Listener {
+    private Path storePath;
+    private Store store;
+
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
+        storePath = getDataFolder().toPath().resolve("store.json");
+        store = Store.read(storePath);
+        store.write(storePath);
+        getServer().getScheduler().runTaskTimer(
+            this, () -> store.write(storePath),
+            5 * 60 * 20, 5 * 60 * 20
+        );
+        getCommand("mending").setExecutor(new MendingCmd(store));
+    }
+
+    @Override
+    public void onDisable() {
+        store.write(storePath);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerItemMend(PlayerItemMendEvent e) {
-        e.setCancelled(true);
+        switch (store.getMode(e.getPlayer())) {
+            case OFF:
+            case REPAIR:
+                e.setCancelled(true);
+                break;
+            case VANILLA:
+                break;
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerExpChange(PlayerExpChangeEvent e) {
+        switch (store.getMode(e.getPlayer())) {
+            case OFF:
+            case VANILLA:
+                break;
+            case REPAIR:
+                handleRepairMode(e);
+                break;
+        }
+    }
+
+    private void handleRepairMode(PlayerExpChangeEvent e) {
         int amount = e.getAmount() * 2;
         if (amount <= 0)
             return;

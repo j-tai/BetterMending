@@ -2,3 +2,8 @@ name: BetterMending
 version: @version@
 main: ca.jtai.bettermending.BetterMending
 api-version: 1.16
+
+commands:
+  mending:
+    description: Change the Mending mode
+    usage: /mending
